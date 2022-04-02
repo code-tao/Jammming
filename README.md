@@ -1,6 +1,6 @@
 # Getting started with Jammming
 
-Jammming uses [Spotify WEB API](https://developer.spotify.com/web-api/) to help users curate playlists and save it to their spotify accounts.
+Jammming uses [Spotify WEB API](https://developer.spotify.com/web-api/) to help users curate and save playlists to their spotify accounts.
 
 The application allows a user to:
 * Search for a song by it's title, artist name, or album name.
@@ -94,4 +94,5 @@ This project is licensed under the terms of the GNU GPLv3
 
 # Contributing
 
-Have ideas about Jammming? Clone this repository to take it further.
+I appreciate every feedback, please leave a comment or open an issue on this repository.
+Have ideas about Jammming? Clone this repository and take it further.

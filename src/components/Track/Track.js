@@ -33,6 +33,9 @@ export default class Track extends React.Component {
         const track = this.props.track;
         return (
             <div className="Track">
+                <div className="Track-image">
+                    <img src={track.imageUrl} alt="album-art"/>
+                </div>
                 <div className="Track-information">
                     <h3>{track.name}</h3>
                     <p>{track.artist} | {track.album}</p>
