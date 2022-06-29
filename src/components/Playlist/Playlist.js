@@ -7,10 +7,15 @@ export default class Playlist extends React.Component {
     constructor(props) {
         super(props);
         this.handleNameChange = this.handleNameChange.bind(this);
+        this.handleSaveToSpotify = this.handleSaveToSpotify.bind(this);
     }
 
     handleNameChange(e) {
         this.props.onNameChange(e.target.value);
+    }
+
+    handleSaveToSpotify(e) {
+        this.props.onSave()
     }
 
     render() {
@@ -20,7 +25,7 @@ export default class Playlist extends React.Component {
             <div className="Playlist">
                 <input defaultValue={'New Playlist'} onChange={this.handleNameChange} />
                 <TrackList tracks={tracks}  onRemove={this.props.onRemove} isRemoval={true} />
-                <button className="Playlist-save" onClick={this.props.onSave}>SAVE TO SPOTIFY</button>
+                <button className="Playlist-save" onClick={this.handleSaveToSpotify}>SAVE TO SPOTIFY</button>
             </div>
         );
     }
