@@ -10,7 +10,7 @@ const responseType = 'token';
 
 const Spotify = {
     saveAccessToken() {
-        console.log('saveAccessToken running');
+        // Check and save if access token is in url.
         const accessTokenMatch = window.location.href.match(/access_token=([^&]*)/);
         const expiresInMatch = window.location.href.match(/expires_in=([^&]*)/);
 
@@ -18,32 +18,33 @@ const Spotify = {
             userAccessToken = accessTokenMatch[1];
             expirationTime = Number(expiresInMatch[1]);
             window.setTimeout(() => { userAccessToken = '' }, expirationTime * 1000);
+            // Clear access token from address bar.
             window.history.pushState('Access Token', null, '/');
             if (userAccessToken) {
-                console.log('saveAccessToken ran: token found and saved from address bar, returning it');
                 return userAccessToken;
             };
         } else {
-            console.log('saveAccessToken ran: no token found  in address, returning');
+            // Return if no token found is in address bar.
             return;
         }
     },
 
     getAccessToken() {
         if (userAccessToken) {
-            console.log('existing token found, returning it');
+            // Return it if a valid token already exists.
             return userAccessToken;
-        } else if (this.saveAccessToken()) {
-            return userAccessToken;
+            /* } else if (this.saveAccessToken()) {
+                // Might be redundant.
+                 return userAccessToken; */
         } else {
-            console.log('no token, redirecting to spotify for authorization');
+            // Redirect to spotify for authorization if no valid token already exist.
             const url = `https://accounts.spotify.com/authorize?response_type=${responseType}&client_id=${clientID}&redirect_uri=${redirectURI}&scope=${scope}`;
             window.location = url;
         }
     },
 
     search(term) {
-        console.log('search running');
+        // Get a valid token before performing search.
         let accessToken = this.getAccessToken();
         const headers = {
             'Authorization': tokenType + accessToken,

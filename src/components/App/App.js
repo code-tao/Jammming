@@ -67,20 +67,22 @@ class App extends React.Component {
   }
 
   search(term) {
-    console.log('saving term to sessionStorage');
+    // Persist search term to browser storage incase of redirection to spotify for auth.
     sessionStorage.setItem('term', term);
     Spotify.search(term).then(newSearchResults => {
       this.setState({
         searchResults: newSearchResults
       })
+      // Clear browser session storage after 'successful' search.
       sessionStorage.clear();
     });
   }
 
   componentDidMount() {
+    // Attempt to grab token from url in cases of redirection from spotify authorization.
     Spotify.saveAccessToken();
     if  (sessionStorage.getItem('term')) {
-      console.log(`existing term from prev attempt, '${sessionStorage.getItem('term')}', found in sessionStorage, attempting search again`);
+      // Re-execute search for term from previous attempt, found in sessionStorage.
       this.search(sessionStorage.getItem('term'));
     }
   }
