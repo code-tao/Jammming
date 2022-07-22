@@ -67,11 +67,22 @@ class App extends React.Component {
   }
 
   search(term) {
+    console.log('saving term to sessionStorage');
+    sessionStorage.setItem('term', term);
     Spotify.search(term).then(newSearchResults => {
       this.setState({
         searchResults: newSearchResults
       })
+      sessionStorage.clear();
     });
+  }
+
+  componentDidMount() {
+    Spotify.saveAccessToken();
+    if  (sessionStorage.getItem('term')) {
+      console.log(`existing term from prev attempt, '${sessionStorage.getItem('term')}', found in sessionStorage, attempting search again`);
+      this.search(sessionStorage.getItem('term'));
+    }
   }
 
   render() {

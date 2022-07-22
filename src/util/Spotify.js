@@ -3,45 +3,47 @@ let expirationTime = '';
 let tokenType = 'Bearer ';
 
 const clientID = '45ef46e4eacf447d8ef2a68da2aa6dc2';
-const redirectURI = 'localhost:3000';
+const redirectURI = 'http://localhost:3000';
 const scope = 'playlist-modify-private, playlist-modify-public';
 const responseType = 'token';
 
 
 const Spotify = {
+    saveAccessToken() {
+        console.log('saveAccessToken running');
+        const accessTokenMatch = window.location.href.match(/access_token=([^&]*)/);
+        const expiresInMatch = window.location.href.match(/expires_in=([^&]*)/);
+
+        if (accessTokenMatch && expiresInMatch) {
+            userAccessToken = accessTokenMatch[1];
+            expirationTime = Number(expiresInMatch[1]);
+            window.setTimeout(() => { userAccessToken = '' }, expirationTime * 1000);
+            window.history.pushState('Access Token', null, '/');
+            if (userAccessToken) {
+                console.log('saveAccessToken ran: token found and saved from address bar, returning it');
+                return userAccessToken;
+            };
+        } else {
+            console.log('saveAccessToken ran: no token found  in address, returning');
+            return;
+        }
+    },
+
     getAccessToken() {
-        const url = `https://accounts.spotify.com/authorize?response_type=${responseType}&client_id=${clientID}&redirect_uri=${redirectURI}&scope=${scope}`;
-        const urlRE = /access_token=([^&]*).*expires_in=([^&]*)/;
-        let currentUrlString;
-        const saveAccessToken = (finalURL) => {
-            // finalURL = window.location.href;
-            const match = finalURL.match(urlRE);
-            userAccessToken = match[1];
-            expirationTime = match[2];
-            //Optional piece of code for 'non-bearer' token type
-            window.setTimeout(() => { userAccessToken = '' }, expirationTime * 1000)
-            // window.history.pushState('Access Token', null, '/');
-        }
-
         if (userAccessToken) {
-            // DO NOTHING
-        } else if (urlRE.test(window.location.href)) {
-            saveAccessToken(window.location.href);
+            console.log('existing token found, returning it');
+            return userAccessToken;
+        } else if (this.saveAccessToken()) {
+            return userAccessToken;
         } else {
-            fetch(url).then(response =>  saveAccessToken(response.headers.location.href))
-            // saveAccessToken(window.location.href);
+            console.log('no token, redirecting to spotify for authorization');
+            const url = `https://accounts.spotify.com/authorize?response_type=${responseType}&client_id=${clientID}&redirect_uri=${redirectURI}&scope=${scope}`;
+            window.location = url;
         }
-
-        console.log(userAccessToken)
-        return userAccessToken;
-        /*
-        if (!urlRE.test(currentUrlString)) {
-                window.location = url;
-        } else {
-        */
     },
 
     search(term) {
+        console.log('search running');
         let accessToken = this.getAccessToken();
         const headers = {
             'Authorization': tokenType + accessToken,
@@ -116,7 +118,7 @@ const Spotify = {
             }
         })
         /*.then(() => console.log(`added ${trackURIs.length} tracks succesfully`))
-
+     
         console.log('playlist saved as ' + playlistID);*/
     }
 }
