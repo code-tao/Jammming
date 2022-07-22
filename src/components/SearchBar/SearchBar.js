@@ -24,7 +24,7 @@ export default class SearchBar extends React.Component {
     render() {
         return (
             <div className="SearchBar">
-                <input placeholder="Enter A Song, Album, or Artist" onChange={this.handleTermChange} />
+                <input placeholder="Enter A Song, Album, or Artist" onChange={this.handleTermChange} defaultValue={sessionStorage.getItem('term')} />
                 <button className="SearchButton" onClick={this.handleSearch}>SEARCH</button>
             </div>
         )
