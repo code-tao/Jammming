@@ -75,7 +75,7 @@ const Spotify = {
         }
     },
 
-    savePlaylist(name, trackURIs) {
+    async savePlaylist(name, trackURIs) {
         if (!(name && trackURIs)) {
             return;
         }
@@ -87,58 +87,58 @@ const Spotify = {
             'Content-Type': 'application/json'
         }
 
-        let userID;
-        let playlistID;
-        let snapshotID;
         // Start playlist creation.
-        // Get user ID.
-        console.log('fetching user ID...')
-        let playlistSaveResponse = fetch('https://api.spotify.com/v1/me', {
+        //// Get user ID.
+        console.log('Fetching user ID...')
+        let userID = fetch('https://api.spotify.com/v1/me', {
             'headers': headers
         }).then(response => {
             return response.json();
         }).then(jsonResponse => {
-            userID = jsonResponse.id;
-            console.log('authorized user ID is ' + userID);
-            return userID;
-        }).then(userID => {
-            console.log('Now creating playlist for user ' + userID);
+            return jsonResponse.id;
+        }).catch(error => console.error(error));
+        ////// Await and save user ID.
+        let currentUserID = await userID;
+        console.log(`Current user\nID: ${currentUserID}`);
 
-            // Create a new empty playlist with userID
-            fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
-                'method': 'POST',
-                'headers': headers,
-                'body': JSON.stringify({
-                    'name': name,
-                    'description': 'Made with Jammming'
-                })
-            }).then(response => {
-                return response.json()
-            }).then(jsonResponse => {
-                playlistID = jsonResponse['id'];
-                console.log('created playlist, playlist ID is: ' + playlistID);
-                return playlistID;
-            }).then(playlistID => {
-                console.log('Now adding tracks to playlist ' + playlistID);
+        //// Create a new empty playlist with userID
+        console.log('Creating playlist for user...');
+        let playlistID = fetch(`https://api.spotify.com/v1/users/${currentUserID}/playlists`, {
+            'method': 'POST',
+            'headers': headers,
+            'body': JSON.stringify({
+                'name': name,
+                'description': 'Made with Jammming'
+            })
+        }).then(response => {
+            return response.json()
+        }).then(jsonResponse => {
+            return jsonResponse['id'];
+        }).catch(error => console.error(error));
+        ////// Await and save playlist ID.
+        let currentPlaylistID = await playlistID;
+        console.log(`Created playlist,\nID: ${currentPlaylistID}`);
 
-                // Add tracks to created playlist
-                fetch(`https://api.spotify.com/v1/playlists/${playlistID}/tracks`, {
-                    'method': 'POST',
-                    'headers': headers,
-                    'body': JSON.stringify({
-                        "uris": trackURIs,
-                        "position": 0
-                    })
-                }).then(response => {
-                    return response.json();
-                }).then(jsonResponse => {
-                    snapshotID = jsonResponse.snapshot_id;
-                    console.log(`Added ${trackURIs.length} songs to playlist saved as ${playlistID}. Snapshot ID: ${snapshotID}`);
-                    return snapshotID;
-                })
-            });
-        });
-        return playlistSaveResponse;
+        //// Add tracks to created playlist
+        console.log('Adding tracks to playlist...');
+        let snapshotID = fetch(`https://api.spotify.com/v1/playlists/${currentPlaylistID}/tracks`, {
+            'method': 'POST',
+            'headers': headers,
+            'body': JSON.stringify({
+                "uris": trackURIs,
+                "position": 0
+            })
+        }).then(response => {
+            return response.json();
+        }).then(jsonResponse => {
+            return jsonResponse.snapshot_id;
+        }).catch(error => console.error(error));
+        ////// Await and save snapshot ID.
+        let currentSnapshotID = await snapshotID;
+        console.log(`Added ${trackURIs.length} tracks to playlist\nPlaylist ID: ${currentPlaylistID}, \n\nFor user\nUser ID: ${currentUserID}.\n\nThis change has a Snapshot ID: ${currentSnapshotID}`);
+
+        // Return the snapshot ID.
+        return currentSnapshotID;
     }
 }
 export default Spotify;
