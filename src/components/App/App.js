@@ -11,7 +11,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      playlistName: '',
+      playlistName: 'New Playlist',
       playlistTracks: [/*
         { name: 'Lenu', artist: 'Buju', album: 'Single', id: '8923' },
         { name: 'True Love', artist: 'Wizkid', album: 'Made in Lagos', id: '0923' },
@@ -58,9 +58,9 @@ class App extends React.Component {
 
   savePlaylist() {
     const trackURIs = this.state.playlistTracks.map(track => track.uri);
-    Spotify.savePlaylist((this.state.playlistName||'New Playlist'), trackURIs).then(snapshotID => {
+    Spotify.savePlaylist(this.state.playlistName, trackURIs).then(snapshotID => {
       if (snapshotID) {
-        alert('Playlist saved!\n Check out your Spotify account to start jammming it.');
+        alert('Playlist saved!\nCheck out your Spotify account to enjoy your Jams.');
         // Clear playlist after successful save.
         this.setState({
           playlistName: 'New Playlist',
