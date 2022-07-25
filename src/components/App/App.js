@@ -11,7 +11,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      playlistName: '',
+      playlistName: 'New Playlist',
       playlistTracks: [/*
         { name: 'Lenu', artist: 'Buju', album: 'Single', id: '8923' },
         { name: 'True Love', artist: 'Wizkid', album: 'Made in Lagos', id: '0923' },
@@ -58,11 +58,15 @@ class App extends React.Component {
 
   savePlaylist() {
     const trackURIs = this.state.playlistTracks.map(track => track.uri);
-    Spotify.savePlaylist(this.state.playlistName, trackURIs).then(() => {
-      this.setState({
-        playlistName: 'New Playlist',
-        playlistTracks: []
-      })
+    Spotify.savePlaylist(this.state.playlistName, trackURIs).then(playlistSaveResponse => {
+      if (playlistSaveResponse) {
+        alert('Playlist saved!');
+        console.log(playlistSaveResponse);
+        this.setState({
+          playlistName: 'New Playlist',
+          playlistTracks: []
+        })
+      }
     });
   }
 
@@ -70,9 +74,11 @@ class App extends React.Component {
     // Persist search term to browser storage incase of redirection to spotify for auth.
     sessionStorage.setItem('term', term);
     Spotify.search(term).then(newSearchResults => {
-      this.setState({
-        searchResults: newSearchResults
-      })
+      if (newSearchResults) {
+        this.setState({
+          searchResults: newSearchResults
+        })
+      }
       // Clear browser session storage after 'successful' search.
       sessionStorage.clear();
     });
@@ -81,7 +87,7 @@ class App extends React.Component {
   componentDidMount() {
     // Attempt to grab token from url in cases of redirection from spotify authorization.
     Spotify.saveAccessToken();
-    if  (sessionStorage.getItem('term')) {
+    if (sessionStorage.getItem('term')) {
       // Re-execute search for term from previous attempt, found in sessionStorage.
       this.search(sessionStorage.getItem('term'));
     }

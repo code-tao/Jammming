@@ -51,32 +51,36 @@ const Spotify = {
             'Content-Type': 'application/json'
         }
 
-        let tracksQueryResponse = fetch(`https://api.spotify.com/v1/search?type=track&include_external=audio&q=${term}`, {
-            'headers': headers
-        }).then(response => {
-            return response.json()
-        }).then(jsonResponse => {
-            if (jsonResponse.tracks.items) {
-                return jsonResponse.tracks.items.map(track => {
-                    return {
-                        'id': track.id,
-                        'name': track.name,
-                        'artist': track.artists.map(artist => artist.name).reduce(
-                            (prevArtists, currentArtist) => `${prevArtists}, ${currentArtist}`),
-                        'album': track.album.name,
-                        'uri': track.uri,
-                        'imageUrl': track.album.images[2].url
-                    }
-                })
-            }
-        }).catch(error => console.error(error));
-        return tracksQueryResponse;
+        if (accessToken) {
+            let tracksQueryResponse = fetch(`https://api.spotify.com/v1/search?type=track&include_external=audio&q=${term}`, {
+                'headers': headers
+            }).then(response => {
+                return response.json()
+            }).then(jsonResponse => {
+                if (jsonResponse.tracks.items) {
+                    return jsonResponse.tracks.items.map(track => {
+                        return {
+                            'id': track.id,
+                            'name': track.name,
+                            'artist': track.artists.map(artist => artist.name).reduce(
+                                (prevArtists, currentArtist) => `${prevArtists}, ${currentArtist}`),
+                            'album': track.album.name,
+                            'uri': track.uri,
+                            'imageUrl': track.album.images[2].url
+                        }
+                    })
+                }
+            }).catch(error => console.error(error));
+            return tracksQueryResponse;
+        }
     },
 
     savePlaylist(name, trackURIs) {
         if (!(name && trackURIs)) {
             return;
         }
+
+        // Get a valid token before performing save.
         let accessToken = this.getAccessToken();
         const headers = {
             'Authorization': tokenType + accessToken,
@@ -85,42 +89,56 @@ const Spotify = {
 
         let userID;
         let playlistID;
-        fetch('https://api.spotify.com/v1/me', {
+        let snapshotID;
+        // Start playlist creation.
+        // Get user ID.
+        console.log('fetching user ID...')
+        let playlistSaveResponse = fetch('https://api.spotify.com/v1/me', {
             'headers': headers
         }).then(response => {
             return response.json();
         }).then(jsonResponse => {
             userID = jsonResponse.id;
+            console.log('authorized user ID is ' + userID);
+            return userID;
+        }).then(userID => {
+            console.log('Now creating playlist for user ' + userID);
+
+            // Create a new empty playlist with userID
+            fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
+                'method': 'POST',
+                'headers': headers,
+                'body': JSON.stringify({
+                    'name': name,
+                    'description': 'Made with Jammming'
+                })
+            }).then(response => {
+                return response.json()
+            }).then(jsonResponse => {
+                playlistID = jsonResponse['id'];
+                console.log('created playlist, playlist ID is: ' + playlistID);
+                return playlistID;
+            }).then(playlistID => {
+                console.log('Now adding tracks to playlist ' + playlistID);
+
+                // Add tracks to created playlist
+                fetch(`https://api.spotify.com/v1/playlists/${playlistID}/tracks`, {
+                    'method': 'POST',
+                    'headers': headers,
+                    'body': JSON.stringify({
+                        "uris": trackURIs,
+                        "position": 0
+                    })
+                }).then(response => {
+                    return response.json();
+                }).then(jsonResponse => {
+                    snapshotID = jsonResponse.snapshot_id;
+                    console.log(`Added ${trackURIs.length} songs to playlist saved as ${playlistID}. Snapshot ID: ${snapshotID}`);
+                    return snapshotID;
+                })
+            });
         });
-
-        console.log('user id is: ' + userID);
-
-        fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
-            'method': 'POST',
-            'headers': headers,
-            'body': JSON.stringify({
-                'name': name,
-                'description': 'Made with Jammming'
-            })
-        }).then(response => {
-            // console.log(response);
-            return response.json()
-        }).then(jsonResponse => {
-            playlistID = jsonResponse['id'];
-        })
-        // console.log('created playlist id is: ' + playlistID);
-
-        fetch(`https://api.spotify.com/v1/playlists/${playlistID}/tracks`, {
-            'method': 'POST',
-            'headers': headers,
-            'data': {
-                "uris": trackURIs,
-                "position": 0
-            }
-        })
-        /*.then(() => console.log(`added ${trackURIs.length} tracks succesfully`))
-     
-        console.log('playlist saved as ' + playlistID);*/
+        return playlistSaveResponse;
     }
 }
 export default Spotify;
