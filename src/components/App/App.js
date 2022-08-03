@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 import SearchBar from '../SearchBar/SearchBar';
@@ -7,106 +7,82 @@ import Playlist from '../Playlist/Playlist';
 
 import Spotify from '../../util/Spotify';
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      playlistName: 'New Playlist',
-      playlistTracks: [/*
+function App() {
+  const [playlistName, setPlaylistName] = useState('New Playlist');
+  const [playlistTracks, setPlaylistTracks] = useState([/*
         { name: 'Lenu', artist: 'Buju', album: 'Single', id: '8923' },
         { name: 'True Love', artist: 'Wizkid', album: 'Made in Lagos', id: '0923' },
         { name: 'Mood', artist: 'Wizkid', album: 'Made in Lagos', id: '6729' },*/
-      ],
-      searchResults: [/*
+  ]);
+  const [searchResults, setSearchResults] = useState([/*
         { name: 'True Love', artist: 'Wizkid', album: 'Made in Lagos', id: '0923' },
         { name: 'Mood', artist: 'Wizkid', album: 'Made in Lagos', id: '6729' },
         { name: 'Lenu', artist: 'Buju', album: 'Single', id: '8923' },
         { name: 'Piece of Me', artist: 'Wizkid', album: 'Made in Lagos', id: '2279' },
         { name: 'Walkin Blind', artist: 'Patti Smith', album: 'Dead Man Walking', id: '8023' }*/
-      ]
-    };
-    this.addTrack = this.addTrack.bind(this);
-    this.removeTrack = this.removeTrack.bind(this);
-    this.updatePlaylistName = this.updatePlaylistName.bind(this);
-    this.savePlaylist = this.savePlaylist.bind(this);
-    this.search = this.search.bind(this);
-  }
+  ]);
 
-  addTrack(track) {
-    const found = this.state.playlistTracks.some(existing => existing.id === track.id);
+  const addTrack = (track) => {
+    const found = playlistTracks.some(existing => existing.id === track.id);
     if (!found) {
-      const updatedPlaylistTracks = this.state.playlistTracks;
-      updatedPlaylistTracks.push(track);
-      this.setState({
-        playlistTracks: updatedPlaylistTracks
-      });
+      setPlaylistTracks([...playlistTracks, track]);
     };
   }
 
-  removeTrack(track) {
-    const updatedPlaylistTracks = this.state.playlistTracks.filter(existing => existing.id !== track.id);
-    this.setState({
-      playlistTracks: updatedPlaylistTracks
-    });
+  const removeTrack = (track) => {
+    const updatedPlaylistTracks = playlistTracks.filter(existing => existing.id !== track.id);
+    setPlaylistTracks(updatedPlaylistTracks);
   }
 
-  updatePlaylistName(newName) {
-    this.setState({
-      playlistName: newName
-    });
+  const updatePlaylistName = (newName) => {
+    setPlaylistName(newName);
   }
 
-  savePlaylist() {
-    const trackURIs = this.state.playlistTracks.map(track => track.uri);
-    Spotify.savePlaylist(this.state.playlistName, trackURIs).then(snapshotID => {
+  const savePlaylist = () => {
+    const trackURIs = playlistTracks.map(track => track.uri);
+    Spotify.savePlaylist(playlistName, trackURIs).then(snapshotID => {
       if (snapshotID) {
         alert('Playlist saved!\nCheck out your Spotify account to enjoy your Jams.');
         // Clear playlist after successful save.
-        this.setState({
-          playlistName: 'New Playlist',
-          playlistTracks: []
-        })
+        setPlaylistName('New Playlist');
+        setPlaylistTracks([])
       }
     });
   }
 
-  search(term) {
+  const search = (term) => {
     // Persist search term to browser storage incase of redirection to spotify for auth.
     sessionStorage.setItem('term', term);
     Spotify.search(term).then(newSearchResults => {
       if (newSearchResults) {
-        this.setState({
-          searchResults: newSearchResults
-        })
+        setSearchResults(newSearchResults);
       }
       // Clear browser session storage after 'successful' search.
       sessionStorage.clear();
     });
   }
 
-  componentDidMount() {
+  useEffect(() => {
     // Attempt to grab token from url in cases of redirection from spotify authorization.
     Spotify.saveAccessToken();
     if (sessionStorage.getItem('term')) {
       // Re-execute search for term from previous attempt, found in sessionStorage.
-      this.search(sessionStorage.getItem('term'));
+      search(sessionStorage.getItem('term'));
     }
-  }
+  }, []);
 
-  render() {
-    return (
-      <div>
-        <h1>Ja<span className="highlight">mmm</span>ing</h1>
-        <div className="App">
-          <SearchBar onSearch={this.search} />
-          <div className="App-playlist">
-            <SearchResults searchResults={this.state.searchResults} onAdd={this.addTrack} />
-            <Playlist name={this.state.playlistName} tracks={this.state.playlistTracks} onRemove={this.removeTrack} onNameChange={this.updatePlaylistName} onSave={this.savePlaylist} />
-          </div>
+  return (
+    <div>
+      <h1>Ja<span className="highlight">mmm</span>ing</h1>
+      <div className="App">
+        <SearchBar onSearch={search} />
+        <div className="App-playlist">
+          <SearchResults searchResults={searchResults} onAdd={addTrack} />
+          <Playlist name={playlistName} tracks={playlistTracks} onRemove={removeTrack} onNameChange={updatePlaylistName} onSave={savePlaylist} />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 export default App;
